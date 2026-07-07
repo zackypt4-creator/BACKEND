@@ -1,0 +1,77 @@
+TOPIK: Sequelize Model, Express Route, REST API (POST), MySQL
+
+SOAL:
+Andi sedang membuat aplikasi "Daftar Belanja" sederhana menggunakan Node.js, Express, dan Sequelize yang sudah terhubung ke database MySQL.
+
+Ketentuan:
+1. Buat Model Sequelize bernama Item dengan kolom:
+   - name (STRING, tidak boleh kosong)
+   - bought (BOOLEAN, default false)
+
+2. Buat endpoint:
+   POST /api/items
+
+3. Request Body:
+{
+    "name": "Nama Barang"
+}
+
+4. Jika berhasil, kembalikan status 201 dengan format JSON:
+{
+    "success": true,
+    "message": "Item berhasil ditambahkan",
+    "data": <object item dari database>
+}
+
+5. Jika gagal, gunakan try...catch dan kembalikan status 500:
+{
+    "success": false,
+    "message": "<pesan error sequelize>"
+}
+
+JAWABAN:
+
+// models/Item.js
+const { DataTypes } = require("sequelize");
+const sequelize = require("../config/database");
+
+const Item = sequelize.define("Item", {
+    name: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    bought: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
+    }
+});
+
+module.exports = Item;
+
+
+// routes/itemRoutes.js
+const express = require("express");
+const router = express.Router();
+const Item = require("../models/Item");
+
+router.post("/api/items", async (req, res) => {
+    try {
+        const item = await Item.create({
+            name: req.body.name
+        });
+
+        res.status(201).json({
+            success: true,
+            message: "Item berhasil ditambahkan",
+            data: item
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
+
+module.exports = router;
