@@ -1,0 +1,112 @@
+TOPIK: REST API, MySQL, Random Data, Express.js, Environment Variables (Railway)
+
+SOAL:
+Bunny sedang mengembangkan sebuah fitur "Daily Inspiration" menggunakan Node.js dan Express. Fitur ini menampilkan kutipan motivasi kepada pengguna. Setiap kali pengguna membuka halaman, website akan menampilkan 9 kutipan secara acak.
+
+Ketentuan:
+1. Database MySQL memiliki tabel quotes dengan kolom:
+   - id
+   - text
+   - author
+   - created_at
+
+2. Buat 2 endpoint:
+   - GET /api/quotes
+     Mengembalikan JSON berisi 9 kutipan secara acak.
+   - GET /quotes
+     Menampilkan halaman web sederhana yang menampilkan 9 kutipan tersebut.
+
+3. Konfigurasi database menggunakan environment variables (.env) agar dapat dijalankan di hosting seperti Railway.
+
+JAWABAN:
+
+// db.js
+const mysql = require("mysql2");
+
+const db = mysql.createConnection({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    port: process.env.DB_PORT
+});
+
+db.connect((err) => {
+    if (err) throw err;
+    console.log("Database Connected");
+});
+
+module.exports = db;
+
+
+// app.js
+const express = require("express");
+const db = require("./db");
+
+const app = express();
+
+// API JSON
+app.get("/api/quotes", (req, res) => {
+    const sql = "SELECT * FROM quotes ORDER BY RAND() LIMIT 9";
+
+    db.query(sql, (err, result) => {
+        if (err) {
+            return res.status(500).json({
+                success: false,
+                message: err.message
+            });
+        }
+
+        res.json({
+            success: true,
+            data: result
+        });
+    });
+});
+
+// Halaman Web
+app.get("/quotes", (req, res) => {
+    const sql = "SELECT * FROM quotes ORDER BY RAND() LIMIT 9";
+
+    db.query(sql, (err, result) => {
+        if (err) return res.send("Terjadi Error");
+
+        let html = `
+        <html>
+        <head>
+            <title>Daily Inspiration</title>
+        </head>
+        <body>
+            <h1>Daily Inspiration</h1>
+        `;
+
+        result.forEach(q => {
+            html += `
+                <div>
+                    <h3>"${q.text}"</h3>
+                    <p>- ${q.author}</p>
+                    <hr>
+                </div>
+            `;
+        });
+
+        html += `
+        </body>
+        </html>
+        `;
+
+        res.send(html);
+    });
+});
+
+app.listen(3000, () => {
+    console.log("Server berjalan di port 3000");
+});
+
+
+// .env
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=password
+DB_NAME=quotes_db
+DB_PORT=3306
