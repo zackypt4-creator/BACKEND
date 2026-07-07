@@ -1,0 +1,285 @@
+TOPIK: MVC EXPRESS.JS - AUTENTIKASI & OTORISASI (AKSES ADMIN DAN USER)
+
+SOAL:
+Buat sebuah aplikasi backend menggunakan arsitektur MVC (Model-View-Controller) dengan Express.js.
+
+Sistem memiliki 2 role:
+- ADMIN
+- USER
+
+Gunakan middleware autentikasi yang diasumsikan telah mengisi req.user.
+
+Contoh:
+
+req.user = {
+    id: 1,
+    username: "admin",
+    role: "ADMIN"
+}
+
+atau
+
+req.user = {
+    id: 2,
+    username: "budi",
+    role: "USER"
+}
+
+====================================================
+STRUKTUR PROJECT
+====================================================
+
+project/
+│
+├── app.js
+├── routes/
+│      userRoutes.js
+│
+├── controllers/
+│      userController.js
+│
+├── middleware/
+│      authMiddleware.js
+│      checkAdminRole.js
+│      checkUserRole.js
+│
+└── models/
+       User.js
+
+====================================================
+models/User.js
+====================================================
+
+class User {
+
+    constructor(id, username, role){
+        this.id=id;
+        this.username=username;
+        this.role=role;
+    }
+
+}
+
+module.exports=User;
+
+====================================================
+middleware/authMiddleware.js
+====================================================
+
+function authMiddleware(req,res,next){
+
+    req.user={
+        id:1,
+        username:"admin",
+        role:"ADMIN"
+    };
+
+    next();
+
+}
+
+module.exports=authMiddleware;
+
+====================================================
+middleware/checkAdminRole.js
+====================================================
+
+function checkAdminRole(req,res,next){
+
+    if(req.user && req.user.role==="ADMIN"){
+        return next();
+    }
+
+    return res.status(403).json({
+        success:false,
+        message:"Akses ditolak. Hanya Admin yang diperbolehkan."
+    });
+
+}
+
+module.exports=checkAdminRole;
+
+====================================================
+middleware/checkUserRole.js
+====================================================
+
+function checkUserRole(req,res,next){
+
+    if(req.user && req.user.role==="USER"){
+        return next();
+    }
+
+    return res.status(403).json({
+        success:false,
+        message:"Akses ditolak. Hanya User yang diperbolehkan."
+    });
+
+}
+
+module.exports=checkUserRole;
+
+====================================================
+controllers/userController.js
+====================================================
+
+exports.adminDashboard=(req,res)=>{
+
+    res.json({
+        success:true,
+        message:"Selamat Datang Admin",
+        user:req.user
+    });
+
+};
+
+exports.userDashboard=(req,res)=>{
+
+    res.json({
+        success:true,
+        message:"Selamat Datang User",
+        user:req.user
+    });
+
+};
+
+====================================================
+routes/userRoutes.js
+====================================================
+
+const express=require("express");
+
+const router=express.Router();
+
+const authMiddleware=require("../middleware/authMiddleware");
+
+const checkAdminRole=require("../middleware/checkAdminRole");
+
+const checkUserRole=require("../middleware/checkUserRole");
+
+const userController=require("../controllers/userController");
+
+router.get(
+"/admin",
+authMiddleware,
+checkAdminRole,
+userController.adminDashboard
+);
+
+router.get(
+"/user",
+authMiddleware,
+checkUserRole,
+userController.userDashboard
+);
+
+module.exports=router;
+
+====================================================
+app.js
+====================================================
+
+const express=require("express");
+
+const app=express();
+
+const userRoutes=require("./routes/userRoutes");
+
+app.use(express.json());
+
+app.use("/",userRoutes);
+
+app.listen(3000,()=>{
+
+    console.log("Server Running on Port 3000");
+
+});
+
+====================================================
+HASIL
+====================================================
+
+GET /admin
+
+Jika role = ADMIN
+
+Status : 200
+
+{
+    "success": true,
+    "message": "Selamat Datang Admin",
+    "user": {
+        "id":1,
+        "username":"admin",
+        "role":"ADMIN"
+    }
+}
+
+----------------------------------------------------
+
+GET /admin
+
+Jika role = USER
+
+Status : 403
+
+{
+    "success": false,
+    "message": "Akses ditolak. Hanya Admin yang diperbolehkan."
+}
+
+----------------------------------------------------
+
+GET /user
+
+Jika role = USER
+
+Status : 200
+
+{
+    "success": true,
+    "message": "Selamat Datang User",
+    "user": {
+        "id":2,
+        "username":"budi",
+        "role":"USER"
+    }
+}
+
+----------------------------------------------------
+
+GET /user
+
+Jika role = ADMIN
+
+Status : 403
+
+{
+    "success": false,
+    "message": "Akses ditolak. Hanya User yang diperbolehkan."
+}
+
+====================================================
+KONSEP MVC
+====================================================
+
+Model       → User.js
+Controller  → userController.js
+Middleware  → authMiddleware.js
+            → checkAdminRole.js
+            → checkUserRole.js
+Routes      → userRoutes.js
+App         → app.js
+
+Flow:
+
+Client
+   ↓
+Route
+   ↓
+Authentication Middleware
+   ↓
+Role Middleware (ADMIN / USER)
+   ↓
+Controller
+   ↓
+Response JSON
