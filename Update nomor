@@ -1,0 +1,282 @@
+TOPIK: RELASI SOAL UAS JIKA KELUAR FITUR UPDATE (BERDASARKAN PROJECT BACKEND)
+
+1. SOAL SEQUELIZE CRUD (No.1)
+=================================================
+Topik:
+- Sequelize Model
+- Express Route
+- CRUD API
+
+File yang digunakan:
+config/
+ └── database.js
+
+models/
+ └── Item.js
+
+routes/
+ └── itemRoutes.js
+
+app.js
+
+Jika soal berubah menjadi UPDATE:
+
+PUT /api/items/:id
+atau
+PATCH /api/items/:id
+
+Maka hanya file berikut yang diubah:
+
+routes/itemRoutes.js
+
+Contoh:
+
+router.put("/api/items/:id", async (req, res) => {
+    try {
+        const item = await Item.findByPk(req.params.id);
+
+        if (!item) {
+            return res.status(404).json({
+                success: false,
+                message: "Item tidak ditemukan"
+            });
+        }
+
+        await item.update({
+            name: req.body.name,
+            bought: req.body.bought
+        });
+
+        res.json({
+            success: true,
+            message: "Item berhasil diupdate",
+            data: item
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
+
+
+=================================================
+2. SOAL MIDDLEWARE (No.2)
+=================================================
+
+Topik:
+- Authentication
+- Authorization
+- Middleware
+
+File yang digunakan:
+
+middleware/
+ └── checkAdminRole.js
+
+routes/
+ └── postRoutes.js
+
+Jika soal berubah menjadi role baru:
+
+ADMIN
+atau
+MODERATOR
+
+Yang diubah hanya:
+
+middleware/checkAdminRole.js
+
+Contoh:
+
+function checkAdminRole(req, res, next) {
+
+    if (
+        req.user &&
+        (req.user.role === "ADMIN" ||
+         req.user.role === "MODERATOR")
+    ) {
+        return next();
+    }
+
+    return res.status(403).json({
+        success: false,
+        message: "Akses ditolak"
+    });
+}
+
+
+=================================================
+3. SOAL SOCKET.IO (No.3)
+=================================================
+
+Topik:
+- Socket.IO
+- Real Time
+- Broadcast
+
+File yang digunakan:
+
+server.js
+
+Jika soal berubah menjadi event baru:
+
+place_bid
+↓
+
+cancel_bid
+
+atau
+
+chat_message
+
+Maka cukup menambah event baru.
+
+Contoh:
+
+socket.on("cancel_bid", (data) => {
+
+    io.emit("bid_cancelled", {
+        ...data,
+        timestamp: new Date()
+    });
+
+});
+
+atau
+
+socket.on("chat_message", (data) => {
+
+    io.emit("chat_message", {
+        ...data,
+        timestamp: new Date()
+    });
+
+});
+
+
+=================================================
+4. SOAL MYSQL QUOTES (No.4)
+=================================================
+
+Topik:
+- MySQL
+- Express
+- REST API
+
+File yang digunakan:
+
+config/
+ └── db.js
+
+routes/
+ └── quoteRoutes.js
+
+app.js
+
+.env
+
+Jika soal berubah menjadi:
+
+GET
+↓
+
+POST
+
+atau
+
+UPDATE
+
+atau
+
+DELETE
+
+Yang diubah hanya:
+
+routes/quoteRoutes.js
+
+Contoh UPDATE:
+
+router.put("/api/quotes/:id", (req, res) => {
+
+    const sql = "UPDATE quotes SET text=?, author=? WHERE id=?";
+
+    db.query(
+        sql,
+        [req.body.text, req.body.author, req.params.id],
+        (err, result) => {
+
+            if (err) {
+                return res.status(500).json({
+                    success: false,
+                    message: err.message
+                });
+            }
+
+            res.json({
+                success: true,
+                message: "Quote berhasil diupdate"
+            });
+
+        }
+    );
+
+});
+
+
+=================================================
+RINGKASAN
+=================================================
+
+No.1 (Sequelize CRUD)
+→ File yang diubah:
+models/Item.js
+routes/itemRoutes.js
+
+Jika UPDATE:
+Gunakan findByPk() + update()
+
+-------------------------------------------------
+
+No.2 (Middleware)
+→ File yang diubah:
+middleware/checkAdminRole.js
+
+Jika UPDATE:
+Ubah logika role atau hak akses.
+
+-------------------------------------------------
+
+No.3 (Socket.IO)
+→ File yang diubah:
+server.js
+
+Jika UPDATE:
+Tambah socket.on() baru lalu broadcast menggunakan io.emit().
+
+-------------------------------------------------
+
+No.4 (Quotes MySQL)
+→ File yang diubah:
+config/db.js
+routes/quoteRoutes.js
+app.js
+.env
+
+Jika UPDATE:
+Tambah endpoint PUT/PATCH/DELETE dengan query SQL sesuai kebutuhan.
+
+=================================================
+KESIMPULAN
+=================================================
+
+Jika di UAS keluar soal UPDATE, hampir pasti tidak membuat project baru. Yang berubah hanya file sesuai topiknya:
+
+• CRUD Sequelize → routes/itemRoutes.js
+• Middleware → middleware/checkAdminRole.js
+• Socket.IO → server.js
+• MySQL Quotes → routes/quoteRoutes.js
+
+Struktur project tetap sama, hanya logika pada file tersebut yang disesuaikan.
