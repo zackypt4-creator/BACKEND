@@ -1,0 +1,53 @@
+TOPIK: Socket.IO, Express.js, HTTP Server, Real-Time Broadcast
+
+SOAL:
+Budi sedang membuat fitur "Lelang Online". Ketika ada pengguna yang mengajukan harga baru (bid), semua pengguna yang sedang terhubung di halaman lelang harus langsung melihat harga terbaru secara real-time.
+
+Ketentuan:
+1. Buat setup dasar Express, HTTP Server, dan inisialisasi Socket.IO.
+2. Tambahkan logging saat client melakukan connect dan disconnect.
+3. Dengarkan event "place_bid" dari client.
+4. Payload yang diterima:
+{
+    itemName: "Laptop",
+    price: 5000000,
+    bidder: "Andi"
+}
+5. Broadcast ke semua client menggunakan io.emit().
+6. Nama event yang dikirim adalah "bid_updated".
+7. Payload yang dikirim berisi seluruh data bid ditambah property:
+{
+    timestamp: new Date()
+}
+
+JAWABAN:
+
+const express = require("express");
+const http = require("http");
+const { Server } = require("socket.io");
+
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
+
+io.on("connection", (socket) => {
+    console.log("User Connected:", socket.id);
+
+    socket.on("disconnect", () => {
+        console.log("User Disconnected:", socket.id);
+    });
+
+    socket.on("place_bid", (data) => {
+
+        const bidData = {
+            ...data,
+            timestamp: new Date()
+        };
+
+        io.emit("bid_updated", bidData);
+    });
+});
+
+server.listen(3000, () => {
+    console.log("Server running on port 3000");
+});
